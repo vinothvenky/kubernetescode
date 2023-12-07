@@ -1,5 +1,11 @@
 node {
     def app
+    environment {
+        ARTVERSION = "${env.BUILD_ID}"
+	    registryCredential = "ecr:us-west-1:awscreds"
+	    appRegistry = "503129199420.dkr.ecr.us-west-1.amazonaws.com/vprofileapp"
+	    vprofileRegistry = "https://503129199420.dkr.ecr.us-west-1.amazonaws.com"
+    }
 
     stage('Clone repository') {
       
@@ -20,12 +26,16 @@ node {
         }
     }
 
-    stage('Push image') {
-        
-        docker.withRegistry('https://registry.hub.docker.com', 'dockerhub') {
-            app.push("${env.BUILD_NUMBER}")
-        }
-    }
+    stage('Upload Image') {
+          steps{
+            script {
+              docker.withRegistry( vprofileRegistry, registryCredential ) {
+                dockerImage.push("$BUILD_NUMBER")
+                dockerImage.push('latest')
+              }
+            }
+          }
+	}
     
     stage('Trigger ManifestUpdate') {
                 echo "triggering updatemanifestjob"
